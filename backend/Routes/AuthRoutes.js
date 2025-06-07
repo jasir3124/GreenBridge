@@ -43,18 +43,18 @@ router.post("/signUp", async (req, res) => {
 
         await newUser.save();
 
-        const token = createSecretToken(newUser._id);
-
-        res.cookie("GreenBridge_token", token, {
-            httpOnly: true,
-            secure: true,
-            sameSite: "none",
-            maxAge: 3 * 24 * 60 * 60 * 1000,
-        });
+        // const token = createSecretToken(newUser._id);
+        //
+        // res.cookie("GreenBridge_token", token, {
+        //     httpOnly: true,
+        //     secure: true,
+        //     sameSite: "none",
+        //     maxAge: 3 * 24 * 60 * 60 * 1000,
+        // });
 
         res.status(200).json({
             message: "Account created successfully",
-            token: token,
+            // token: token,
             data: newUser,
         });
     } catch (error) {

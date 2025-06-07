@@ -1,9 +1,10 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import axios from 'axios';
 
 export interface User {
   id: string;
   email: string;
-  name: string;
+  fullName: string;
   greenPoints: number;
   avatar?: string;
   registeredEvents: string[];
@@ -14,7 +15,7 @@ interface AuthContextType {
   user: User | null;
   isLoading: boolean;
   login: (email: string, password: string) => Promise<boolean>;
-  register: (email: string, password: string, name: string) => Promise<boolean>;
+  register: (email: string, password: string, fullName: string) => Promise<boolean>;
   logout: () => void;
   updateUser: (updates: Partial<User>) => void;
 }
@@ -53,7 +54,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       const newUser: User = {
         id: data.id,
         email: data.email,
-        name: data.name,
+        fullName: data.fullName,
         greenPoints: data.greenPoints || 0,
         registeredEvents: data.registeredEvents || [],
         attendedEvents: data.attendedEvents || [],
@@ -70,28 +71,22 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   };
 
-  const register = async (email: string, password: string, name: string): Promise<boolean> => {
+
+  const register = async (email: string, password: string, fullName: string): Promise<boolean> => {
     setIsLoading(true);
     try {
-      const res = await fetch('http://localhost:5000/api/Auth/signUp', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ email, password, name }),
+      const res = await axios.post('http://localhost:5000/api/Auth/signUp', {
+        email,
+        password,
+        fullName,
       });
 
-      if (!res.ok) {
-        console.error('Registration failed:', await res.text());
-        return false;
-      }
-
-      const data = await res.json();
+      const data = res.data;
 
       const newUser: User = {
         id: data.id,
         email: data.email,
-        name: data.name,
+        fullName: data.fullName,
         greenPoints: data.greenPoints || 0,
         registeredEvents: data.registeredEvents || [],
         attendedEvents: data.attendedEvents || [],
@@ -100,8 +95,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
       setUser(newUser);
       return true;
-    } catch (err) {
-      console.error('Registration error:', err);
+    } catch (err: any) {
+      console.error('Registration error:', {
+        status: err.response?.status,
+        data: err.response?.data,
+        headers: err.response?.headers,
+      });
       return false;
     } finally {
       setIsLoading(false);
