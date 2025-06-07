@@ -19,24 +19,24 @@ export default function AuthScreen() {
   const [isLogin, setIsLogin] = useState(true);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [name, setName] = useState('');
+  const [fullName, setName] = useState('');
   const [loading, setLoading] = useState(false);
   const { login, register } = useAuth();
 
   const handleSubmit = async () => {
-    if (!email || !password || (!isLogin && !name)) {
+    if (!email || !password || (!isLogin && !fullName)) {
       Alert.alert('Error', 'Please fill in all fields');
       return;
     }
 
     setLoading(true);
-    
+
     try {
       let success = false;
       if (isLogin) {
         success = await login(email, password);
       } else {
-        success = await register(email, password, name);
+        success = await register(email, password, fullName);
       }
 
       if (success) {
@@ -57,8 +57,8 @@ export default function AuthScreen() {
   };
 
   return (
-    <KeyboardAvoidingView 
-      style={styles.container} 
+    <KeyboardAvoidingView
+      style={styles.container}
       behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
     >
       <LinearGradient
@@ -83,7 +83,7 @@ export default function AuthScreen() {
                 <TextInput
                   style={styles.input}
                   placeholder="Full Name"
-                  value={name}
+                  value={fullName}
                   onChangeText={setName}
                   autoCapitalize="words"
                 />
@@ -113,8 +113,8 @@ export default function AuthScreen() {
               />
             </View>
 
-            <TouchableOpacity 
-              style={styles.submitButton} 
+            <TouchableOpacity
+              style={styles.submitButton}
               onPress={handleSubmit}
               disabled={loading}
             >
@@ -127,13 +127,13 @@ export default function AuthScreen() {
               )}
             </TouchableOpacity>
 
-            <TouchableOpacity 
+            <TouchableOpacity
               style={styles.switchButton}
               onPress={() => setIsLogin(!isLogin)}
             >
               <Text style={styles.switchButtonText}>
-                {isLogin 
-                  ? "Don't have an account? Sign Up" 
+                {isLogin
+                  ? "Don't have an account? Sign Up"
                   : "Already have an account? Sign In"
                 }
               </Text>
