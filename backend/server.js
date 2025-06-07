@@ -1,9 +1,20 @@
 // backend/server.js
 const express = require('express');
 const connect = require('./connect');
+const cors = require('cors');
 
 const authRoutes = require('./Routes/AuthRoutes');
 
+app.use(
+    cors({
+        origin: [
+            "http://localhost:3000",
+            "http://localhost:5173",
+            "http://localhost:8081",
+        ],
+        credentials: true,
+    })
+);
 const app = express();
 const port = 5000;
 
