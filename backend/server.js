@@ -9,7 +9,7 @@ const port = 5000;
 
 app.use(express.json()); // Middleware
 
-app.use('/auth', authRoutes);
+app.use('/api/auth', authRoutes);
 
 app.get('/', (req, res) => {
     res.send('Hello World with Mongoose!');
