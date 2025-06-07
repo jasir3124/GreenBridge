@@ -30,6 +30,7 @@ interface DataContextType {
   news: NewsItem[];
   leaderboard: Array<{ id: string; name: string; points: number; avatar?: string }>;
   registerForEvent: (eventId: string, userId: string) => void;
+  recordAttendance: (eventId: string, userId: string) => void;
 }
 
 const DataContext = createContext<DataContextType | undefined>(undefined);
@@ -163,14 +164,33 @@ const mockLeaderboard = [
 export function DataProvider({ children }: { children: ReactNode }) {
   const [events, setEvents] = useState<Event[]>(mockEvents);
   const [news] = useState<NewsItem[]>(mockNews);
-  const [leaderboard] = useState(mockLeaderboard);
+  const [leaderboard, setLeaderboard] = useState(mockLeaderboard);
 
   const registerForEvent = (eventId: string, userId: string) => {
-    setEvents(prev => prev.map(event => 
-      event.id === eventId 
+    setEvents(prev => prev.map(event =>
+      event.id === eventId
         ? { ...event, currentParticipants: event.currentParticipants + 1, isRegistered: true }
         : event
     ));
+  };
+
+  const recordAttendance = (eventId: string, userId: string) => {
+    // Mark the event as attended
+    setEvents(prev => prev.map(event =>
+      event.id === eventId
+        ? { ...event, isAttended: true }
+        : event
+    ));
+
+    // Award green points to the user
+    const event = events.find(e => e.id === eventId);
+    if (event) {
+      setLeaderboard(prev => prev.map(user =>
+        user.id === userId
+          ? { ...user, points: user.points + event.greenPoints }
+          : user
+      ).sort((a, b) => b.points - a.points)); // Re-sort leaderboard by points
+    }
   };
 
   return (
@@ -179,6 +199,7 @@ export function DataProvider({ children }: { children: ReactNode }) {
       news,
       leaderboard,
       registerForEvent,
+      recordAttendance,
     }}>
       {children}
     </DataContext.Provider>

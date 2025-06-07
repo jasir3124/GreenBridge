@@ -34,52 +34,80 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const login = async (email: string, password: string): Promise<boolean> => {
     setIsLoading(true);
-    
-    // Simulate API call
-    await new Promise(resolve => setTimeout(resolve, 1000));
+    try {
+      const res = await fetch('http://localhost:5000/api/Auth/signIn', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ email, password }),
+      });
 
-    // Mock authentication - in real app, this would be API call
-    if (email && password) {
+      if (!res.ok) {
+        console.error('Login failed:', await res.text());
+        return false;
+      }
+
+      const data = await res.json();
+
       const newUser: User = {
-        id: '1',
-        email,
-        name: email === 'demo@greenbridge.eu' ? 'Demo User' : 'Green User',
-        greenPoints: 150,
-        registeredEvents: ['1', '2'],
-        attendedEvents: ['1'],
+        id: data.id,
+        email: data.email,
+        name: data.name,
+        greenPoints: data.greenPoints || 0,
+        registeredEvents: data.registeredEvents || [],
+        attendedEvents: data.attendedEvents || [],
+        avatar: data.avatar,
       };
+
       setUser(newUser);
-      setIsLoading(false);
       return true;
+    } catch (err) {
+      console.error('Login error:', err);
+      return false;
+    } finally {
+      setIsLoading(false);
     }
-    
-    setIsLoading(false);
-    return false;
   };
 
   const register = async (email: string, password: string, name: string): Promise<boolean> => {
     setIsLoading(true);
-    
-    // Simulate API call
-    await new Promise(resolve => setTimeout(resolve, 1000));
+    try {
+      const res = await fetch('http://localhost:5000/api/Auth/signUp', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ email, password, name }),
+      });
 
-    if (email && password && name) {
+      if (!res.ok) {
+        console.error('Registration failed:', await res.text());
+        return false;
+      }
+
+      const data = await res.json();
+
       const newUser: User = {
-        id: Date.now().toString(),
-        email,
-        name,
-        greenPoints: 0,
-        registeredEvents: [],
-        attendedEvents: [],
+        id: data.id,
+        email: data.email,
+        name: data.name,
+        greenPoints: data.greenPoints || 0,
+        registeredEvents: data.registeredEvents || [],
+        attendedEvents: data.attendedEvents || [],
+        avatar: data.avatar,
       };
+
       setUser(newUser);
-      setIsLoading(false);
       return true;
+    } catch (err) {
+      console.error('Registration error:', err);
+      return false;
+    } finally {
+      setIsLoading(false);
     }
-    
-    setIsLoading(false);
-    return false;
   };
+
 
   const logout = () => {
     setUser(null);
