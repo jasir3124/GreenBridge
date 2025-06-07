@@ -36,42 +36,38 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const login = async (email: string, password: string): Promise<boolean> => {
     setIsLoading(true);
     try {
-      const res = await fetch('http://172.20.10.3:5000/api/Auth/login', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ email, password }),
+      const res = await axios.post('http://172.20.10.3:5000/api/Auth/login', {
+        email,
+        password,
       });
 
-      if (!res.ok) {
-        console.error('Login failed:', await res.text());
-        return false;
-      }
-
-      const data = await res.json();
+      // Axios response data is already parsed JSON
+      const data = res.data.data; // Adjust if your backend response shape differs
 
       console.log(data);
 
       const newUser: User = {
-        id: data.id,
+        id: data._id,                // Note underscore for MongoDB id
         email: data.email,
         fullName: data.fullName,
         greenPoints: data.greenPoints || 0,
         registeredEvents: data.registeredEvents || [],
         attendedEvents: data.attendedEvents || [],
-        avatar: data.avatar,
+        avatar: data.avatarUrl || undefined,
       };
 
       setUser(newUser);
       return true;
-    } catch (err) {
-      console.error('Login error:', err);
+
+    } catch (err: any) {
+      // err.response holds axios error response
+      console.error('Login error:', err.response?.data?.message || err.message);
       return false;
     } finally {
       setIsLoading(false);
     }
   };
+
 
 
   const register = async (email: string, password: string, fullName: string): Promise<boolean> => {

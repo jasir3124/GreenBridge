@@ -85,18 +85,18 @@ router.post("/login", async (req, res) => {
 
         bcrypt.compare(data.password, userData.password, (err, result) => {
             if (result) {
-                const token = createSecretToken(userData._id);
-
-                res.cookie("orderease_token", token, {
-                    httpOnly: true,
-                    secure: true,
-                    sameSite: "none",
-                    maxAge: 3 * 24 * 60 * 60 * 1000,
-                });
+                // const token = createSecretToken(userData._id);
+                //
+                // res.cookie("orderease_token", token, {
+                //     httpOnly: true,
+                //     secure: true,
+                //     sameSite: "none",
+                //     maxAge: 3 * 24 * 60 * 60 * 1000,
+                // });
 
                 res.status(200).json({
                     message: "Logged in successfully!",
-                    token: token,
+                    // token: token,
                     data: userData,
                 });
             } else {
