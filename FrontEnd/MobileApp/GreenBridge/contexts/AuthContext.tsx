@@ -35,7 +35,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const login = async (email: string, password: string): Promise<boolean> => {
     setIsLoading(true);
     try {
-      const res = await fetch('http://localhost:5000/api/Auth/signIn', {
+      const res = await fetch('http://172.20.10.3:5000/api/Auth/signIn', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -73,7 +73,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const register = async (email: string, password: string, name: string): Promise<boolean> => {
     setIsLoading(true);
     try {
-      const res = await fetch('http://localhost:5000/api/Auth/signUp', {
+      const res = await fetch('http://172.20.10.3:5000/api/Auth/signUp', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
