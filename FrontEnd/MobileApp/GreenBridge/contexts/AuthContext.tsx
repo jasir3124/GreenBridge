@@ -36,7 +36,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const login = async (email: string, password: string): Promise<boolean> => {
     setIsLoading(true);
     try {
-      const res = await fetch('http://172.20.10.3:5000/api/Auth/signIn', {
+      const res = await fetch('http://172.20.10.3:5000/api/Auth/login', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -50,6 +50,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }
 
       const data = await res.json();
+
+      console.log(data);
 
       const newUser: User = {
         id: data.id,
@@ -81,16 +83,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         fullName,
       });
 
-      const data = res.data;
+      const resData = await res;
+      const userData = resData.data.data;
 
       const newUser: User = {
-        id: data.id,
-        email: data.email,
-        fullName: data.fullName,
-        greenPoints: data.greenPoints || 0,
-        registeredEvents: data.registeredEvents || [],
-        attendedEvents: data.attendedEvents || [],
-        avatar: data.avatar,
+        id: userData._id,
+        email: userData.email,
+        fullName: userData.fullName,
+        greenPoints: userData.greenPoints || 0,
+        registeredEvents: userData.registeredEvents || [],
+        attendedEvents: userData.attendedEvents || [],
+        avatar: userData.avatarUrl || undefined,
       };
 
       setUser(newUser);
