@@ -2,6 +2,7 @@
 const express = require('express');
 const connect = require('./connect');
 const cors = require('cors');
+const app = express();
 
 const authRoutes = require('./Routes/AuthRoutes');
 
@@ -15,7 +16,7 @@ app.use(
         credentials: true,
     })
 );
-const app = express();
+
 const port = 5000;
 
 app.use(express.json()); // Middleware
