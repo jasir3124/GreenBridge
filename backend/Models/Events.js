@@ -1,41 +1,46 @@
 // models/Event.js
 const mongoose = require('mongoose');
 
-const eventSchema = new mongoose.Schema({
-    title: {
-        type: String,
-        required: true,
-        trim: true,
-    },
-    description: {
+const userSubmittedPhotoSchema = new mongoose.Schema({
+    url: {
         type: String,
         required: true,
     },
-    location: {
-        type: String,
-        required: true,
-    },
-    date: {
-        type: Date,
-        required: true,
-    },
-    organizer: {
+    submittedBy: {
         type: mongoose.Schema.Types.ObjectId,
         ref: 'User',
         required: true,
     },
-    imageUrl: {
-        type: String, // e.g., Cloudinary or S3 URL
+    approved: {
+        type: Boolean,
+        default: false,
     },
-    tags: [String], // e.g., ['environment', 'clean-up']
-    createdAt: {
+    submittedAt: {
         type: Date,
         default: Date.now,
     },
-    attendees: [{
-        type: mongoose.Schema.Types.ObjectId,
-        ref: 'User',
-    }],
+});
+
+const eventSchema = new mongoose.Schema({
+    title: {type: String, required: true, trim: true},
+    description: {type: String, required: true},
+    location: {type: String, required: true},
+    date: {type: Date, required: true},
+    imageUrl: {type: String},
+    greenPoints: {type: Number, default: 0},
+    tags: [String],
+    createdAt: {type: Date, default: Date.now},
+    attendees: [{type: mongoose.Schema.Types.ObjectId, ref: 'User'}],
+    eventPhotos: [String],
+    userSubmittedPhotos: [userSubmittedPhotoSchema],
+});
+
+eventSchema.virtual('isUpcoming').get(function () {
+    return this.date > new Date();
+});
+
+eventSchema.virtual('isPast').get(function () {
+    return this.date < new Date();
 });
 
 module.exports = mongoose.model('Event', eventSchema);

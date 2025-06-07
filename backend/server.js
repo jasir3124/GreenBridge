@@ -5,6 +5,7 @@ const cors = require('cors');
 const app = express();
 
 const authRoutes = require('./Routes/AuthRoutes');
+const eventRoutes = require('./Routes/EventRoutes');
 
 app.use(
     cors({
@@ -16,12 +17,12 @@ app.use(
         credentials: true,
     })
 );
+app.use(express.json()); // Middleware
 
 const port = 5000;
 
-app.use(express.json()); // Middleware
-
 app.use('/api/auth', authRoutes);
+app.use('/api/event', eventRoutes);
 
 app.get('/', (req, res) => {
     res.send('Hello World with Mongoose!');
