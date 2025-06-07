@@ -31,8 +31,8 @@ export default function HomeScreen() {
 
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
-    return date.toLocaleDateString('en-US', { 
-      month: 'short', 
+    return date.toLocaleDateString('en-US', {
+      month: 'short',
       day: 'numeric',
       hour: '2-digit',
       minute: '2-digit'
@@ -41,7 +41,7 @@ export default function HomeScreen() {
 
   return (
     <SafeAreaView style={styles.container}>
-      <ScrollView 
+      <ScrollView
         style={styles.scrollView}
         refreshControl={
           <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
@@ -55,7 +55,7 @@ export default function HomeScreen() {
           <View style={styles.headerContent}>
             <View>
               <Text style={styles.greeting}>Welcome back,</Text>
-              <Text style={styles.userName}>{user?.name}</Text>
+              <Text style={styles.userName}>{user?.fullName}</Text>
             </View>
             <View style={styles.pointsContainer}>
               <Leaf color="white" size={20} />

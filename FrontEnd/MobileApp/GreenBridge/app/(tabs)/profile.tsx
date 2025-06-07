@@ -13,12 +13,12 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useAuth } from '@/contexts/AuthContext';
 import { useData } from '@/contexts/DataContext';
-import { 
-  User, 
-  Award, 
-  Calendar, 
-  Camera, 
-  Settings, 
+import {
+  User,
+  Award,
+  Calendar,
+  Camera,
+  Settings,
   LogOut,
   Trophy,
   Leaf,
@@ -35,11 +35,11 @@ export default function ProfileScreen() {
 
   if (!user) return null;
 
-  const registeredEvents = events.filter(event => 
+  const registeredEvents = events.filter(event =>
     user.registeredEvents.includes(event.id)
   );
-  
-  const attendedEvents = events.filter(event => 
+
+  const attendedEvents = events.filter(event =>
     user.attendedEvents.includes(event.id)
   );
 
@@ -106,7 +106,7 @@ export default function ProfileScreen() {
                 <Camera color="white" size={16} />
               </TouchableOpacity>
             </View>
-            <Text style={styles.userName}>{user.name}</Text>
+            <Text style={styles.userName}>{user.fullName}</Text>
             <Text style={styles.userEmail}>{user.email}</Text>
             <TouchableOpacity style={styles.shareButton} onPress={handleShareProfile}>
               <Share2 color="white" size={16} />
@@ -168,7 +168,7 @@ export default function ProfileScreen() {
                     })}
                   </Text>
                   <Text style={styles.eventLocation}>{event.location}</Text>
-                  <TouchableOpacity 
+                  <TouchableOpacity
                     style={styles.qrButton}
                     onPress={() => showEventQR(event.id)}
                   >
@@ -224,14 +224,14 @@ export default function ProfileScreen() {
             <Upload color="#16A34A" size={20} />
             <Text style={styles.actionButtonText}>Upload Event Photo</Text>
           </TouchableOpacity>
-          
+
           <TouchableOpacity style={styles.actionButton}>
             <Settings color="#6B7280" size={20} />
             <Text style={styles.actionButtonText}>Settings</Text>
           </TouchableOpacity>
-          
-          <TouchableOpacity 
-            style={[styles.actionButton, styles.logoutButton]} 
+
+          <TouchableOpacity
+            style={[styles.actionButton, styles.logoutButton]}
             onPress={handleLogout}
           >
             <LogOut color="#EF4444" size={20} />
@@ -268,7 +268,7 @@ export default function ProfileScreen() {
                 </Text>
               </>
             )}
-            <TouchableOpacity 
+            <TouchableOpacity
               style={styles.modalCloseButton}
               onPress={() => setShowQRModal(false)}
             >
