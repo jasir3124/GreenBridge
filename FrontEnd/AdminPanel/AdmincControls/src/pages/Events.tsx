@@ -375,10 +375,12 @@ const Events = () => {
         fetch(`http://${ipAddress}:5000/api/event/getAllEvents`)
             .then((res) => {
                 if (!res.ok) throw new Error('Failed to fetch events.');
+                setLoading(false);
                 return res.json();
             })
             .then((data) => {
                 setEvents(data.data || []);
+                console.log(data);
                 setLoading(false);
             })
             .catch((err) => {
