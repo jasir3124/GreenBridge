@@ -1,7 +1,7 @@
 import React from 'react';
-import { Users, Calendar, Camera, TrendingUp, MapPin, Award } from 'lucide-react';
+import { Users, Calendar, Camera, Award } from 'lucide-react';
 import StatsCard from '../components/StatsCard';
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, LineChart, Line, PieChart, Pie, Cell } from 'recharts';
+import {  XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, LineChart, Line, PieChart, Pie, Cell } from 'recharts';
 
 const Dashboard: React.FC = () => {
   const eventData = [

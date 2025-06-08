@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Plus, Edit2, Trash2, Send, Eye } from 'lucide-react';
+import { Plus, Edit2, Trash2, Send, } from 'lucide-react';
 
 interface NewsItem {
   id: number;
@@ -61,7 +61,7 @@ const News: React.FC = () => {
   };
 
   const handlePublish = (newsId: number) => {
-    setNews(news.map(item => 
+    setNews(news.map(item =>
       item.id === newsId ? { ...item, status: 'published' as const } : item
     ));
   };
@@ -106,7 +106,7 @@ const News: React.FC = () => {
                   className="w-full h-full object-cover"
                 />
               </div>
-              
+
               <div className="flex-1 p-6">
                 <div className="flex items-start justify-between mb-3">
                   <div className="flex items-center space-x-3">
@@ -139,14 +139,14 @@ const News: React.FC = () => {
                     </button>
                   </div>
                 </div>
-                
+
                 <div className="flex items-center space-x-4 text-sm text-gray-500 mb-3">
                   <span>{item.publishDate}</span>
                   <span className="text-green-600 bg-green-50 px-2 py-1 rounded-full text-xs font-medium">
                     {item.category}
                   </span>
                 </div>
-                
+
                 <p className="text-gray-600 line-clamp-3">{item.content}</p>
               </div>
             </div>
@@ -163,7 +163,7 @@ const News: React.FC = () => {
                 {selectedNews ? 'Edit News Article' : 'Add New News Article'}
               </h3>
             </div>
-            
+
             <form className="p-6 space-y-6">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">Title</label>
@@ -173,7 +173,7 @@ const News: React.FC = () => {
                   defaultValue={selectedNews?.title || ''}
                 />
               </div>
-              
+
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">Category</label>
@@ -193,7 +193,7 @@ const News: React.FC = () => {
                   </select>
                 </div>
               </div>
-              
+
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">Featured Image URL</label>
                 <input
@@ -203,7 +203,7 @@ const News: React.FC = () => {
                   defaultValue={selectedNews?.image || ''}
                 />
               </div>
-              
+
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">Content</label>
                 <textarea
@@ -214,7 +214,7 @@ const News: React.FC = () => {
                 />
               </div>
             </form>
-            
+
             <div className="p-6 border-t border-gray-200 flex justify-end space-x-3">
               <button
                 onClick={() => setShowModal(false)}

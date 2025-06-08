@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Search, Award, Calendar, MapPin, Mail, Phone, Filter } from 'lucide-react';
+import { Search, Award, MapPin, Mail, Phone, Filter } from 'lucide-react';
 
 interface User {
   id: number;
@@ -19,7 +19,7 @@ const Users: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedFilter, setSelectedFilter] = useState<'all' | 'active' | 'inactive'>('all');
   const [sortBy, setSortBy] = useState<'name' | 'points' | 'events'>('points');
-  
+
   const [users] = useState<User[]>([
     {
       id: 1,
@@ -182,7 +182,7 @@ const Users: React.FC = () => {
                 className="pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent w-64"
               />
             </div>
-            
+
             <select
               value={selectedFilter}
               onChange={(e) => setSelectedFilter(e.target.value as any)}
@@ -193,7 +193,7 @@ const Users: React.FC = () => {
               <option value="inactive">Inactive</option>
             </select>
           </div>
-          
+
           <div className="flex items-center space-x-2">
             <span className="text-sm text-gray-600">Sort by:</span>
             <select
