@@ -4,7 +4,7 @@ import {Plus, Edit2, Trash2, MapPin, Users, Calendar,} from 'lucide-react';
 interface Event {
     id: number;
     title: string;
-    date: string;
+    date: Date;
     time: string;
     location: string;
     description: string;
@@ -12,7 +12,9 @@ interface Event {
     currentParticipants: number;
     status: 'upcoming' | 'ongoing' | 'completed';
     category: string;
-    image: string;
+    image: ImageData;
+    greenPoints: number;
+    pointsAwarded: boolean;
 }
 
 const Events: React.FC = () => {
@@ -61,6 +63,7 @@ const Events: React.FC = () => {
         if (!formRef.current) return;
 
         const formData = new FormData(formRef.current);
+        console.log(formData);
 
         const method = selectedEvent ? 'PUT' : 'POST';
         const url = selectedEvent
@@ -315,10 +318,10 @@ const Events: React.FC = () => {
                                 <label className="block text-sm font-medium text-gray-700 mb-2">Event Image</label>
                                 <input
                                     name="image"
-                                    type="file"
+                                    type="image"
                                     accept="image/*"
                                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
-                                />
+                                 alt={"altIMG"}/>
                                 {selectedEvent && (
                                     <p className="text-sm text-gray-500 mt-1">Leave empty to keep current image</p>
                                 )}
