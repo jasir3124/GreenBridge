@@ -39,7 +39,8 @@ const Events: React.FC = () => {
           return res.json();
         })
         .then((data: Event[]) => {
-          setEvents(data);
+          setEvents(data.data);
+            console.log(data);
           setLoading(false);
         })
         .catch((err) => {
@@ -149,7 +150,7 @@ const Events: React.FC = () => {
 
         {/* Events Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {events.map((event) => (
+          {events?.map((event) => (
               <div key={event.id} className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden hover:shadow-md transition-shadow duration-200">
                 <div className="relative">
                   <img

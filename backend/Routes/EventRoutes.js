@@ -6,11 +6,15 @@ const upload = require("../assets/cloudinary");
 const User = require("../Models/User");
 const Event = require("../Models/Events");
 
-router.get("/getAllEvents", async (req, res) => {
-    const events = await Event.find({});
-    console.log(events);
-    res.status(200).json({data: events});
-})
+router.get("/events", async (req, res) => {
+    try {
+        const events = await Event.find({});
+        res.status(200).json({ data: events });
+    } catch (error) {
+        console.error("Failed to fetch events:", error);
+        res.status(500).json({ error: "Internal Server Error" });
+    }
+});
 
 router.post("/createEvent", upload.single('image'), async (req, res) => {
     console.log('req.file:', req.file); // Add this line
@@ -118,4 +122,5 @@ router.put("/attendedEvent/:id", async (req, res) => {
         res.status(500).json({ message: "Internal server error", error: error.message });
     }
 });
+
 module.exports = router

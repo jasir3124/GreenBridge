@@ -40,6 +40,7 @@ app.get('/', (req, res) => {
 const startServer = async () => {
     try {
         await connect();
+        require("./assets/CheckEventsEnded");
         app.listen(port, () => {
             console.log(`✅ Server running on http://localhost:${port}`);
         });
