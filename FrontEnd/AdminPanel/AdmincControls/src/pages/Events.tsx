@@ -380,7 +380,6 @@ const Events = () => {
             })
             .then((data) => {
                 setEvents(data.data || []);
-                console.log(data);
                 setLoading(false);
             })
             .catch((err) => {
@@ -401,7 +400,7 @@ const Events = () => {
 
     const handleDeleteEvent = (eventId) => {
         if (window.confirm('Are you sure you want to delete this event?')) {
-            fetch(`http://${ipAddress}:5000/api/event/${eventId}`, { method: 'DELETE' })
+            fetch(`http://${ipAddress}:5000/api/event/deleteEvent/${eventId}`, { method: 'DELETE' })
                 .then((res) => {
                     if (!res.ok) throw new Error('Failed to delete event.');
                     setEvents(events.filter((event) => event.id !== eventId));

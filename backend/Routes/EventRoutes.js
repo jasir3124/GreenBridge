@@ -6,7 +6,7 @@ const upload = require("../assets/cloudinary");
 const User = require("../Models/User");
 const Event = require("../Models/Events");
 
-router.get("/events", async (req, res) => {
+router.get("/getAllEvents", async (req, res) => {
     try {
         const events = await Event.find({});
         res.status(200).json({ data: events });
@@ -44,6 +44,24 @@ router.post("/createEvent", upload.single('image'), async (req, res) => {
     } catch (err) {
         console.error('Error creating event:', err);
         res.status(500).json({error: 'Internal server error', details: err.message});
+    }
+});
+
+router.delete('/deleteEvent/:id', async (req, res) => {
+    console.log("test");
+    const eventId = req.params.id;
+    console.log("🗑️ Deleting event with ID:", eventId);
+
+    if (!eventId || eventId.length < 10) return res.status(400).json({ error: 'Invalid ID' });
+
+    try {
+        const deletedEvent = await Event.findByIdAndDelete(eventId);
+        if (!deletedEvent) return res.status(404).json({ error: 'Event not found' });
+
+        res.status(200).json({ message: 'Event deleted', event: deletedEvent });
+    } catch (err) {
+        console.error('Error deleting event:', err);
+        res.status(500).json({ error: 'Internal server error' });
     }
 });
 

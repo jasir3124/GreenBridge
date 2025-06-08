@@ -36,22 +36,12 @@ const eventSchema = new mongoose.Schema({
     createdAt: {type: Date, default: Date.now},
     attendees: [{type: mongoose.Schema.Types.ObjectId, ref: 'User'}],
     eventPhotos: [String],
+    status: {
+        type: String,
+        enum: ['upcoming', 'ongoing', 'completed'],
+        default: 'upcoming',
+    },
     userSubmittedPhotos: [userSubmittedPhotoSchema],
-});
-
-eventSchema.virtual('status').get(function () {
-    const now = new Date();
-    const eventDate = new Date(this.date);
-
-    if (eventDate > now) return 'upcoming';
-
-    // Assuming the event lasts for the whole day
-    const endOfDay = new Date(eventDate);
-    endOfDay.setHours(23, 59, 59, 999);
-
-    if (now >= eventDate && now <= endOfDay) return 'ongoing';
-
-    return 'completed';
 });
 
 eventSchema.set('toObject', { virtuals: true });
