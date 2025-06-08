@@ -32,7 +32,7 @@ const eventSchema = new mongoose.Schema({
         type: Boolean,
         default: false
     },
-    tags: [String],
+    category: [String],
     createdAt: {type: Date, default: Date.now},
     attendees: [{type: mongoose.Schema.Types.ObjectId, ref: 'User'}],
     eventPhotos: [String],
