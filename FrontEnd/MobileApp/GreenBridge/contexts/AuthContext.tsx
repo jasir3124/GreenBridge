@@ -26,7 +26,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
-  const ipAddress = process.env["IP_ADDRESS "]
+  const ipAddress = process.env.EXPO_PUBLIC_IP_ADDRESS
   useEffect(() => {
     // Simulate checking for existing session
     setTimeout(() => {
@@ -73,6 +73,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const register = async (email: string, password: string, fullName: string): Promise<boolean> => {
     setIsLoading(true);
+    console.log(ipAddress)
     try {
       const res = await axios.post(`http://${ipAddress}:5000/api/Auth/signUp`, {
         email,
