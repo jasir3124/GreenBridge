@@ -26,6 +26,8 @@ const eventSchema = new mongoose.Schema({
     description: {type: String, required: true},
     location: {type: String, required: true},
     date: {type: Date, required: true},
+    time: {type: String, required: true},
+    maxParticipants: {type: Number, required: true},
     imageUrl: {type: String},
     greenPoints: {type: Number, default: 0},
     pointsAwarded: {

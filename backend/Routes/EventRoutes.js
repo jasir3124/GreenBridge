@@ -19,8 +19,10 @@ router.get("/getAllEvents", async (req, res) => {
 router.post("/createEvent", upload.single('image'), async (req, res) => {
     console.log('req.file:', req.file); // Add this line
     console.log('req.body:', req.body); // Add this too
+    console.log('req.body.attendees:', req.body.attendees);
+    console.log('req.body.attendees:', req.body.maxPartincipants);
     try {
-        const {title, description, date, time, location, attendees} = req.body;
+        const {title, description, date, time, location, maxParticipants, attendees} = req.body;
 
         // Check if file was uploaded
         if (!req.file) {
@@ -33,6 +35,7 @@ router.post("/createEvent", upload.single('image'), async (req, res) => {
             date,
             time,
             location,
+            maxParticipants,
             imageUrl: req.file.path, // Cloudinary URL
             attendees: attendees ? JSON.parse(attendees) : [],
         });
