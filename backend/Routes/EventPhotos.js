@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const Event = require('../models/Event');
+const Event = require('../Models/Events');
 
 // GET /api/photos - Get all user-submitted photos (with event info)
 router.get('/photos', async (req, res) => {
