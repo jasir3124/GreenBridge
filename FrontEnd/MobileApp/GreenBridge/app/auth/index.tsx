@@ -14,6 +14,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { useAuth } from '@/contexts/AuthContext';
 import { router } from 'expo-router';
 import { Leaf, Mail, Lock, User } from 'lucide-react-native';
+import UserExistsModal from '../components/ExistingUserModal';
 
 export default function AuthScreen() {
   const [isLogin, setIsLogin] = useState(true);
@@ -22,6 +23,8 @@ export default function AuthScreen() {
   const [fullName, setName] = useState('');
   const [loading, setLoading] = useState(false);
   const { login, register } = useAuth();
+  const [showModal, setShowModal] = useState(false);
+  const [modalMessage, setModalMessage] = useState('');
 
   const handleSubmit = async () => {
     if (!email || !password || (!isLogin && !fullName)) {
@@ -31,6 +34,16 @@ export default function AuthScreen() {
 
     setLoading(true);
 
+    let timeoutTriggered = false;
+
+    // 7-second timeout to show "took too long" modal
+    const timeoutId = setTimeout(() => {
+      timeoutTriggered = true;
+      setLoading(false);
+      setModalMessage('Sorry, it took too long. Please try again.');
+      setShowModal(true);
+    }, 7000);
+
     try {
       let success = false;
       if (isLogin) {
@@ -39,15 +52,28 @@ export default function AuthScreen() {
         success = await register(email, password, fullName);
       }
 
+      clearTimeout(timeoutId);
+
+      if (timeoutTriggered) return; // Timeout already fired, ignore late response
+
       if (success) {
         router.replace('/(tabs)');
       } else {
-        Alert.alert('Error', isLogin ? 'Invalid credentials' : 'Registration failed');
+        if (!isLogin) {
+          // User already exists scenario
+          setModalMessage('The email address you entered is already registered.');
+          setShowModal(true);
+        } else {
+          Alert.alert('Error', 'Invalid credentials');
+        }
       }
     } catch (error) {
+      clearTimeout(timeoutId);
+      if (timeoutTriggered) return;
+
       Alert.alert('Error', 'Something went wrong');
     } finally {
-      setLoading(false);
+      if (!timeoutTriggered) setLoading(false);
     }
   };
 
@@ -57,117 +83,87 @@ export default function AuthScreen() {
   };
 
   return (
-    <KeyboardAvoidingView
-      style={styles.container}
-      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-    >
-      <LinearGradient
-        colors={['#22C55E', '#16A34A', '#15803D']}
-        style={styles.gradient}
+      <KeyboardAvoidingView
+          style={styles.container}
+          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
       >
-        <View style={styles.content}>
-          <View style={styles.header}>
-            <View style={styles.logoContainer}>
-              <Leaf color="white" size={48} strokeWidth={2} />
+        <LinearGradient colors={['#22C55E', '#16A34A', '#15803D']} style={styles.gradient}>
+          <View style={styles.content}>
+            <View style={styles.header}>
+              <View style={styles.logoContainer}>
+                <Leaf color="white" size={48} strokeWidth={2} />
+              </View>
+              <Text style={styles.title}>GreenBridge</Text>
+              <Text style={styles.subtitle}>Connecting youth with environmental action</Text>
             </View>
-            <Text style={styles.title}>GreenBridge</Text>
-            <Text style={styles.subtitle}>
-              Connecting youth with environmental action
-            </Text>
-          </View>
 
-          <View style={styles.form}>
-            {!isLogin && (
+            <View style={styles.form}>
+              {!isLogin && (
+                  <View style={styles.inputContainer}>
+                    <User color="#16A34A" size={20} />
+                    <TextInput
+                        style={styles.input}
+                        placeholder="Full Name"
+                        value={fullName}
+                        onChangeText={setName}
+                        autoCapitalize="words"
+                    />
+                  </View>
+              )}
+
               <View style={styles.inputContainer}>
-                <User color="#16A34A" size={20} />
+                <Mail color="#16A34A" size={20} />
                 <TextInput
-                  style={styles.input}
-                  placeholder="Full Name"
-                  value={fullName}
-                  onChangeText={setName}
-                  autoCapitalize="words"
+                    style={styles.input}
+                    placeholder="Email"
+                    value={email}
+                    onChangeText={setEmail}
+                    keyboardType="email-address"
+                    autoCapitalize="none"
                 />
               </View>
-            )}
 
-            <View style={styles.inputContainer}>
-              <Mail color="#16A34A" size={20} />
-              <TextInput
-                style={styles.input}
-                placeholder="Email"
-                value={email}
-                onChangeText={setEmail}
-                keyboardType="email-address"
-                autoCapitalize="none"
-              />
-            </View>
+              <View style={styles.inputContainer}>
+                <Lock color="#16A34A" size={20} />
+                <TextInput
+                    style={styles.input}
+                    placeholder="Password"
+                    value={password}
+                    onChangeText={setPassword}
+                    secureTextEntry
+                />
+              </View>
 
-            <View style={styles.inputContainer}>
-              <Lock color="#16A34A" size={20} />
-              <TextInput
-                style={styles.input}
-                placeholder="Password"
-                value={password}
-                onChangeText={setPassword}
-                secureTextEntry
-              />
-            </View>
-
-            <TouchableOpacity
-              style={styles.submitButton}
-              onPress={handleSubmit}
-              disabled={loading}
-            >
-              {loading ? (
-                <ActivityIndicator color="white" />
-              ) : (
-                <Text style={styles.submitButtonText}>
-                  {isLogin ? 'Sign In' : 'Sign Up'}
-                </Text>
-              )}
-            </TouchableOpacity>
-
-            <TouchableOpacity
-              style={styles.switchButton}
-              onPress={() => setIsLogin(!isLogin)}
-            >
-              <Text style={styles.switchButtonText}>
-                {isLogin
-                  ? "Don't have an account? Sign Up"
-                  : "Already have an account? Sign In"
-                }
-              </Text>
-            </TouchableOpacity>
-
-            <View style={styles.demoContainer}>
-              <Text style={styles.demoTitle}>Try Demo:</Text>
-              <TouchableOpacity style={styles.demoButton} onPress={fillDemoCredentials}>
-                <Text style={styles.demoButtonText}>Fill Demo Credentials</Text>
+              <TouchableOpacity style={styles.submitButton} onPress={handleSubmit} disabled={loading}>
+                {loading ? <ActivityIndicator color="white" /> : <Text style={styles.submitButtonText}>{isLogin ? 'Sign In' : 'Sign Up'}</Text>}
               </TouchableOpacity>
+
+              <TouchableOpacity style={styles.switchButton} onPress={() => setIsLogin(!isLogin)}>
+                <Text style={styles.switchButtonText}>
+                  {isLogin ? "Don't have an account? Sign Up" : 'Already have an account? Sign In'}
+                </Text>
+              </TouchableOpacity>
+
+              <View style={styles.demoContainer}>
+                <Text style={styles.demoTitle}>Try Demo:</Text>
+                <TouchableOpacity style={styles.demoButton} onPress={fillDemoCredentials}>
+                  <Text style={styles.demoButtonText}>Fill Demo Credentials</Text>
+                </TouchableOpacity>
+              </View>
             </View>
           </View>
-        </View>
-      </LinearGradient>
-    </KeyboardAvoidingView>
+        </LinearGradient>
+
+        <UserExistsModal visible={showModal} onClose={() => setShowModal(false)} message={modalMessage} />
+      </KeyboardAvoidingView>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-  },
-  gradient: {
-    flex: 1,
-  },
-  content: {
-    flex: 1,
-    justifyContent: 'center',
-    padding: 24,
-  },
-  header: {
-    alignItems: 'center',
-    marginBottom: 48,
-  },
+  container: { flex: 1 },
+  gradient: { flex: 1 },
+  content: { flex: 1, justifyContent: 'center', padding: 24 },
+  header: { alignItems: 'center', marginBottom: 48 },
   logoContainer: {
     width: 80,
     height: 80,
@@ -177,12 +173,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     marginBottom: 16,
   },
-  title: {
-    fontSize: 32,
-    fontFamily: 'Inter-Bold',
-    color: 'white',
-    marginBottom: 8,
-  },
+  title: { fontSize: 32, fontFamily: 'Inter-Bold', color: 'white', marginBottom: 8 },
   subtitle: {
     fontSize: 16,
     fontFamily: 'Inter-Regular',
