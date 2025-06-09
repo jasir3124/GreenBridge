@@ -71,7 +71,7 @@ router.delete('/deleteEvent/:id', async (req, res) => {
 router.put('/updateEvent/:id', upload.single('image'), async (req, res) => {
     try {
         const eventId = req.params.id;
-        const {title, description, date, location, attendees} = req.body;
+        const {title, description, date, time, maxParticipants, location, attendees} = req.body;
 
         const existingEvent = await Event.findById(eventId);
         if (!existingEvent) {
