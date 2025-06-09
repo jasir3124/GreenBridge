@@ -25,7 +25,7 @@ export default function EventsScreen() {
 
   const filteredEvents = events.filter(event => {
     const matchesSearch = event.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      event.description.toLowerCase().includes(searchQuery.toLowerCase());
+        event.description.toLowerCase().includes(searchQuery.toLowerCase());
     const matchesCategory = filterCategory === 'All' || event.category === filterCategory;
     return matchesSearch && matchesCategory;
   });
@@ -59,6 +59,14 @@ export default function EventsScreen() {
     return hoursDiff >= -4 && hoursDiff <= 2;
   };
 
+  const isRegistered = (eventId: string) => {
+    return user?.registeredEvents.includes(eventId) || false;
+  };
+
+  const isAttended = (eventId: string) => {
+    return user?.attendedEvents.includes(eventId) || false;
+  };
+
   const getEventStatus = (event: any) => {
     if (isAttended(event.id)) return 'attended';
     if (isRegistered(event.id)) {
@@ -77,7 +85,6 @@ export default function EventsScreen() {
     const event = events.find(e => e.id === eventId);
     if (!event) return;
 
-    // Pre-registration checks
     if (isEventFull(event)) {
       Alert.alert('Event Full', 'This event has reached maximum capacity.');
       return;
@@ -94,31 +101,96 @@ export default function EventsScreen() {
     }
 
     Alert.alert(
-      'Confirm Registration',
-      `Register for "${event.title}"?\n\nDate: ${formatDate(event.date)}\nLocation: ${event.location}\n\nYou'll earn +${event.greenPoints} green points upon attendance.`,
-      [
-        { text: 'Cancel', style: 'cancel' },
-        {
-          text: 'Register',
-          onPress: async () => {
-            setLoading(true);
-            try {
-              registerForEvent(eventId, user.id);
-              updateUser({
-                registeredEvents: [...user.registeredEvents, eventId]
-              });
-              Alert.alert(
-                'Registration Successful!',
-                `You're registered for "${event.title}". We'll remind you before the event starts.`
-              );
-            } catch (error) {
-              Alert.alert('Registration Failed', 'Please try again later.');
-            } finally {
-              setLoading(false);
+        'Confirm Registration',
+        `Register for "${event.title}"?\n\nDate: ${formatDate(event.date)}\nLocation: ${event.location}\n\nYou'll earn +${event.greenPoints} green points upon attendance.`,
+        [
+          { text: 'Cancel', style: 'cancel' },
+          {
+            text: 'Register',
+            onPress: async () => {
+              setLoading(true);
+              try {
+                // Call the backend API here
+                const response = await fetch(`https://your-api.com/api/events/${eventId}/register`, {
+                  method: 'POST',
+                  headers: {
+                    'Content-Type': 'application/json',
+                    // Include auth token if necessary, e.g.
+                    // Authorization: `Bearer ${user.token}`,
+                  },
+                  body: JSON.stringify({ userId: user.id }),
+                });
+
+                if (!response.ok) {
+                  throw new Error('Failed to register');
+                }
+
+                // Update local state after successful registration
+                registerForEvent(eventId, user.id); // existing context update if needed
+                updateUser({
+                  registeredEvents: [...user.registeredEvents, eventId]
+                });
+
+                Alert.alert(
+                    'Registration Successful!',
+                    `You're registered for "${event.title}". We'll remind you before the event starts.`
+                );
+              } catch (error) {
+                Alert.alert('Registration Failed', 'Please try again later.');
+              } finally {
+                setLoading(false);
+              }
             }
           }
-        }
-      ]
+        ]
+    );
+  };
+
+  const handleCancelRegistration = async (eventId: string) => {
+    if (!user || loading) return;
+
+    const event = events.find(e => e.id === eventId);
+    if (!event) return;
+
+    Alert.alert(
+        'Cancel Registration',
+        `Are you sure you want to cancel your registration for "${event.title}"?`,
+        [
+          { text: 'Keep Registration', style: 'cancel' },
+          {
+            text: 'Cancel Registration',
+            style: 'destructive',
+            onPress: async () => {
+              setLoading(true);
+              try {
+                // Call the backend API here
+                const response = await fetch(`https://your-api.com/api/events/${eventId}/unregister`, {
+                  method: 'POST',
+                  headers: {
+                    'Content-Type': 'application/json',
+                    // Authorization: `Bearer ${user.token}`, // if needed
+                  },
+                  body: JSON.stringify({ userId: user.id }),
+                });
+
+                if (!response.ok) {
+                  throw new Error('Failed to cancel registration');
+                }
+
+                // Update local state after successful unregister
+                updateUser({
+                  registeredEvents: user.registeredEvents.filter(id => id !== eventId)
+                });
+
+                Alert.alert('Registration Cancelled', 'Your registration has been cancelled.');
+              } catch (error) {
+                Alert.alert('Cancellation Failed', 'Please try again later.');
+              } finally {
+                setLoading(false);
+              }
+            }
+          }
+        ]
     );
   };
 
@@ -140,8 +212,8 @@ export default function EventsScreen() {
 
     if (!isEventHappening(event.date)) {
       Alert.alert(
-        'Check-in Not Available',
-        'Event check-in is only available 2 hours before and up to 4 hours after the event start time.'
+          'Check-in Not Available',
+          'Event check-in is only available 2 hours before and up to 4 hours after the event start time.'
       );
       return;
     }
@@ -160,82 +232,49 @@ export default function EventsScreen() {
 🎉 Confirming attendance will award you ${event.greenPoints} green points and cannot be undone.`;
 
     Alert.alert(
-      '✅ Confirm Event Attendance',
-      eventDetails,
-      [
-        { text: 'Cancel', style: 'cancel' },
-        {
-          text: 'Mark as Attended',
-          style: 'default',
-          onPress: async () => {
-            setLoading(true);
-            try {
-              await recordAttendance(eventId, user.id);
+        '✅ Confirm Event Attendance',
+        eventDetails,
+        [
+          { text: 'Cancel', style: 'cancel' },
+          {
+            text: 'Mark as Attended',
+            style: 'default',
+            onPress: async () => {
+              setLoading(true);
+              try {
+                await recordAttendance(eventId, user.id);
 
-              const newPoints = user.greenPoints + event.greenPoints;
-              const newLevel = Math.floor(newPoints / 100) + 1;
-              const currentLevel = Math.floor(user.greenPoints / 100) + 1;
-              const leveledUp = newLevel > currentLevel;
+                const newPoints = user.greenPoints + event.greenPoints;
+                const newLevel = Math.floor(newPoints / 100) + 1;
+                const currentLevel = Math.floor(user.greenPoints / 100) + 1;
+                const leveledUp = newLevel > currentLevel;
 
-              updateUser({
-                attendedEvents: [...user.attendedEvents, eventId],
-                registeredEvents: user.registeredEvents.filter(id => id !== eventId),
-                greenPoints: newPoints
-              });
+                updateUser({
+                  attendedEvents: [...user.attendedEvents, eventId],
+                  registeredEvents: user.registeredEvents.filter(id => id !== eventId),
+                  greenPoints: newPoints
+                });
 
-              if (leveledUp) {
-                Alert.alert(
-                  '🎉 Level Up Achievement!',
-                  `🌟 Congratulations! You've reached Level ${newLevel}!\n\n✅ Event: ${event.title}\n🏆 Points Earned: +${event.greenPoints}\n💚 Total Points: ${newPoints}\n🚀 New Level: ${newLevel}\n\nKeep up the great work making a difference!`
-                );
-              } else {
-                Alert.alert(
-                  '✅ Attendance Successfully Recorded!',
-                  `🎉 Thank you for attending "${event.title}"!\n\n🏆 Points Earned: +${event.greenPoints}\n💚 Total Points: ${newPoints}\n📈 Level: ${currentLevel}\n\nYour participation makes a real impact!`
-                );
+                if (leveledUp) {
+                  Alert.alert(
+                      '🎉 Level Up Achievement!',
+                      `🌟 Congratulations! You've reached Level ${newLevel}!\n\n✅ Event: ${event.title}\n🏆 Points Earned: +${event.greenPoints}\n💚 Total Points: ${newPoints}\n🚀 New Level: ${newLevel}\n\nKeep up the great work making a difference!`
+                  );
+                } else {
+                  Alert.alert(
+                      '✅ Attendance Successfully Recorded!',
+                      `🎉 Thank you for attending "${event.title}"!\n\n🏆 Points Earned: +${event.greenPoints}\n💚 Total Points: ${newPoints}\n📈 Level: ${currentLevel}\n\nYour participation makes a real impact!`
+                  );
+                }
+              } catch (error) {
+                Alert.alert('❌ Attendance Error', 'Failed to record your attendance. Please try again or contact support if the issue persists.');
+              } finally {
+                setLoading(false);
               }
-            } catch (error) {
-              Alert.alert('❌ Attendance Error', 'Failed to record your attendance. Please try again or contact support if the issue persists.');
-            } finally {
-              setLoading(false);
             }
           }
-        }
-      ]
+        ]
     );
-  };
-
-  const handleCancelRegistration = (eventId: string) => {
-    if (!user) return;
-
-    const event = events.find(e => e.id === eventId);
-    if (!event) return;
-
-    Alert.alert(
-      'Cancel Registration',
-      `Are you sure you want to cancel your registration for "${event.title}"?`,
-      [
-        { text: 'Keep Registration', style: 'cancel' },
-        {
-          text: 'Cancel Registration',
-          style: 'destructive',
-          onPress: () => {
-            updateUser({
-              registeredEvents: user.registeredEvents.filter(id => id !== eventId)
-            });
-            Alert.alert('Registration Cancelled', 'Your registration has been cancelled.');
-          }
-        }
-      ]
-    );
-  };
-
-  const isRegistered = (eventId: string) => {
-    return user?.registeredEvents.includes(eventId) || false;
-  };
-
-  const isAttended = (eventId: string) => {
-    return user?.attendedEvents.includes(eventId) || false;
   };
 
   const renderEventButton = (event: any) => {
@@ -244,181 +283,181 @@ export default function EventsScreen() {
     switch (status) {
       case 'attended':
         return (
-          <View style={styles.attendedButton}>
-            <Award color="#F59E0B" size={16} />
-            <Text style={styles.attendedButtonText}>Attended (+{event.greenPoints} pts)</Text>
-          </View>
+            <View style={styles.attendedButton}>
+              <Award color="#F59E0B" size={16} />
+              <Text style={styles.attendedButtonText}>Attended (+{event.greenPoints} pts)</Text>
+            </View>
         );
 
       case 'canAttend':
         return (
-          <TouchableOpacity
-            style={styles.attendButton}
-            onPress={() => handleAttendance(event.id)}
-            disabled={loading}
-          >
-            <CheckCircle color="white" size={16} />
-            <Text style={styles.attendButtonText}>
-              {loading ? 'Processing...' : 'Mark Attendance'}
-            </Text>
-          </TouchableOpacity>
+            <TouchableOpacity
+                style={styles.attendButton}
+                onPress={() => handleAttendance(event.id)}
+                disabled={loading}
+            >
+              <CheckCircle color="white" size={16} />
+              <Text style={styles.attendButtonText}>
+                {loading ? 'Processing...' : 'Mark Attendance'}
+              </Text>
+            </TouchableOpacity>
         );
 
       case 'registered':
         return (
-          <View style={styles.buttonRow}>
-            <TouchableOpacity
-              style={styles.cancelButton}
-              onPress={() => handleCancelRegistration(event.id)}
-              disabled={loading}
-            >
-              <Text style={styles.cancelButtonText}>Cancel</Text>
-            </TouchableOpacity>
-            <View style={styles.registeredButton}>
-              <Calendar color="#16A34A" size={16} />
-              <Text style={styles.registeredButtonText}>Registered</Text>
+            <View style={styles.buttonRow}>
+              <TouchableOpacity
+                  style={styles.cancelButton}
+                  onPress={() => handleCancelRegistration(event.id)}
+                  disabled={loading}
+              >
+                <Text style={styles.cancelButtonText}>Cancel</Text>
+              </TouchableOpacity>
+              <View style={styles.registeredButton}>
+                <Calendar color="#16A34A" size={16} />
+                <Text style={styles.registeredButtonText}>Registered</Text>
+              </View>
             </View>
-          </View>
         );
 
       case 'missed':
         return (
-          <View style={styles.missedButton}>
-            <Text style={styles.missedButtonText}>Event Missed</Text>
-          </View>
+            <View style={styles.missedButton}>
+              <Text style={styles.missedButtonText}>Event Missed</Text>
+            </View>
         );
 
       case 'past':
         return (
-          <View style={styles.pastButton}>
-            <Text style={styles.pastButtonText}>Event Ended</Text>
-          </View>
+            <View style={styles.pastButton}>
+              <Text style={styles.pastButtonText}>Event Ended</Text>
+            </View>
         );
 
       case 'full':
         return (
-          <View style={styles.fullButton}>
-            <Text style={styles.fullButtonText}>Event Full</Text>
-          </View>
+            <View style={styles.fullButton}>
+              <Text style={styles.fullButtonText}>Event Full</Text>
+            </View>
         );
 
       default:
         return (
-          <TouchableOpacity
-            style={styles.registerButton}
-            onPress={() => handleRegister(event.id)}
-            disabled={loading}
-          >
-            <Text style={styles.registerButtonText}>
-              {loading ? 'Registering...' : 'Register'}
-            </Text>
-          </TouchableOpacity>
+            <TouchableOpacity
+                style={styles.registerButton}
+                onPress={() => handleRegister(event.id)}
+                disabled={loading}
+            >
+              <Text style={styles.registerButtonText}>
+                {loading ? 'Registering...' : 'Register'}
+              </Text>
+            </TouchableOpacity>
         );
     }
   };
 
   return (
-    <SafeAreaView style={styles.container}>
-      <View style={styles.header}>
-        <Text style={styles.headerTitle}>Events</Text>
-        <Text style={styles.headerSubtitle}>Discover and join green initiatives</Text>
-      </View>
-
-      {/* Search and Filter */}
-      <View style={styles.searchContainer}>
-        <View style={styles.searchBar}>
-          <Search color="#6B7280" size={20} />
-          <TextInput
-            style={styles.searchInput}
-            placeholder="Search events..."
-            value={searchQuery}
-            onChangeText={setSearchQuery}
-          />
+      <SafeAreaView style={styles.container}>
+        <View style={styles.header}>
+          <Text style={styles.headerTitle}>Events</Text>
+          <Text style={styles.headerSubtitle}>Discover and join green initiatives</Text>
         </View>
-      </View>
 
-      <View style={styles.filterContainer}>
-        <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.filterScrollContent}>
-          {categories.map((category) => (
-            <TouchableOpacity
-              key={category}
-              style={[
-                styles.filterChip,
-                filterCategory === category && styles.filterChipActive
-              ]}
-              onPress={() => setFilterCategory(category)}
-            >
-              <Text style={[
-                styles.filterChipText,
-                filterCategory === category && styles.filterChipTextActive
-              ]}>
-                {category}
-              </Text>
-            </TouchableOpacity>
-          ))}
-        </ScrollView>
-      </View>
+        {/* Search and Filter */}
+        <View style={styles.searchContainer}>
+          <View style={styles.searchBar}>
+            <Search color="#6B7280" size={20} />
+            <TextInput
+                style={styles.searchInput}
+                placeholder="Search events..."
+                value={searchQuery}
+                onChangeText={setSearchQuery}
+            />
+          </View>
+        </View>
 
-      <ScrollView style={styles.scrollView} contentContainerStyle={styles.scrollViewContent}>
-        {filteredEvents.map((event) => (
-          <View key={event.id} style={styles.eventCard}>
-            <Image source={{ uri: event.image }} style={styles.eventImage} />
-
-            {isAttended(event.id) && (
-              <View style={styles.attendedBadge}>
-                <Award color="white" size={16} />
-                <Text style={styles.attendedText}>Attended</Text>
-              </View>
-            )}
-
-            {isEventHappening(event.date) && isRegistered(event.id) && !isAttended(event.id) && (
-              <View style={styles.liveBadge}>
-                <Text style={styles.liveText}>CHECK-IN AVAILABLE</Text>
-              </View>
-            )}
-
-            <View style={styles.eventContent}>
-              <View style={styles.eventHeader}>
-                <Text style={styles.eventCategory}>{event.category}</Text>
-                <Text style={styles.eventPoints}>+{event.greenPoints} pts</Text>
-              </View>
-
-              <Text style={styles.eventTitle}>{event.title}</Text>
-              <Text style={styles.eventDescription}>{event.description}</Text>
-
-              <View style={styles.eventMeta}>
-                <View style={styles.metaItem}>
-                  <Clock color="#6B7280" size={16} />
-                  <Text style={styles.metaText}>{formatDate(event.date)}</Text>
-                </View>
-                <View style={styles.metaItem}>
-                  <MapPin color="#6B7280" size={16} />
-                  <Text style={styles.metaText}>{event.location}</Text>
-                </View>
-                <View style={styles.metaItem}>
-                  <Users color="#6B7280" size={16} />
-                  <Text style={styles.metaText}>
-                    {event.currentParticipants}/{event.maxParticipants}
-                    {isEventFull(event) && <Text style={styles.fullText}> (Full)</Text>}
+        <View style={styles.filterContainer}>
+          <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.filterScrollContent}>
+            {categories.map((category) => (
+                <TouchableOpacity
+                    key={category}
+                    style={[
+                      styles.filterChip,
+                      filterCategory === category && styles.filterChipActive
+                    ]}
+                    onPress={() => setFilterCategory(category)}
+                >
+                  <Text style={[
+                    styles.filterChipText,
+                    filterCategory === category && styles.filterChipTextActive
+                  ]}>
+                    {category}
                   </Text>
+                </TouchableOpacity>
+            ))}
+          </ScrollView>
+        </View>
+
+        <ScrollView style={styles.scrollView} contentContainerStyle={styles.scrollViewContent}>
+          {filteredEvents.map((event) => (
+              <View key={event.id} style={styles.eventCard}>
+                <Image source={{ uri: event.image }} style={styles.eventImage} />
+
+                {isAttended(event.id) && (
+                    <View style={styles.attendedBadge}>
+                      <Award color="white" size={16} />
+                      <Text style={styles.attendedText}>Attended</Text>
+                    </View>
+                )}
+
+                {isEventHappening(event.date) && isRegistered(event.id) && !isAttended(event.id) && (
+                    <View style={styles.liveBadge}>
+                      <Text style={styles.liveText}>CHECK-IN AVAILABLE</Text>
+                    </View>
+                )}
+
+                <View style={styles.eventContent}>
+                  <View style={styles.eventHeader}>
+                    <Text style={styles.eventCategory}>{event.category}</Text>
+                    <Text style={styles.eventPoints}>+{event.greenPoints} pts</Text>
+                  </View>
+
+                  <Text style={styles.eventTitle}>{event.title}</Text>
+                  <Text style={styles.eventDescription}>{event.description}</Text>
+
+                  <View style={styles.eventMeta}>
+                    <View style={styles.metaItem}>
+                      <Clock color="#6B7280" size={16} />
+                      <Text style={styles.metaText}>{formatDate(event.date)}</Text>
+                    </View>
+                    <View style={styles.metaItem}>
+                      <MapPin color="#6B7280" size={16} />
+                      <Text style={styles.metaText}>{event.location}</Text>
+                    </View>
+                    <View style={styles.metaItem}>
+                      <Users color="#6B7280" size={16} />
+                      <Text style={styles.metaText}>
+                        {event.currentParticipants}/{event.maxParticipants}
+                        {isEventFull(event) && <Text style={styles.fullText}> (Full)</Text>}
+                      </Text>
+                    </View>
+                  </View>
+
+                  {renderEventButton(event)}
                 </View>
               </View>
+          ))}
 
-              {renderEventButton(event)}
-            </View>
-          </View>
-        ))}
-
-        {filteredEvents.length === 0 && (
-          <View style={styles.emptyState}>
-            <Text style={styles.emptyStateText}>No events found</Text>
-            <Text style={styles.emptyStateSubtext}>
-              Try adjusting your search or filter criteria
-            </Text>
-          </View>
-        )}
-      </ScrollView>
-    </SafeAreaView>
+          {filteredEvents.length === 0 && (
+              <View style={styles.emptyState}>
+                <Text style={styles.emptyStateText}>No events found</Text>
+                <Text style={styles.emptyStateSubtext}>
+                  Try adjusting your search or filter criteria
+                </Text>
+              </View>
+          )}
+        </ScrollView>
+      </SafeAreaView>
   );
 }
 
