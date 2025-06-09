@@ -11,15 +11,17 @@ const userSubmittedPhotoSchema = new mongoose.Schema({
         ref: 'User',
         required: true,
     },
-    approved: {
-        type: Boolean,
-        default: false,
+    status: {
+        type: String,
+        enum: ['pending', 'accepted', 'rejected'],
+        default: 'pending',
     },
     submittedAt: {
         type: Date,
         default: Date.now,
     },
 });
+
 
 const eventSchema = new mongoose.Schema({
     title: {type: String, required: true, trim: true},
