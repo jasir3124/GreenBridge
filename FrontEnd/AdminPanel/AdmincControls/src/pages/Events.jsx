@@ -72,11 +72,13 @@ const Events = () => {
     };
 
     const handleModalSuccess = (newOrUpdatedEvent) => {
-        if (selectedEvent) {
-            setEvents(events.map((ev) => (ev.id === newOrUpdatedEvent.id ? newOrUpdatedEvent : ev)));
-        } else {
-            setEvents([...events, newOrUpdatedEvent]);
-        }
+        // if (selectedEvent) {
+        //     setEvents(events.map((ev) => (ev.id === newOrUpdatedEvent.id ? newOrUpdatedEvent : ev)));
+        // } else {
+        //     setEvents([...events, newOrUpdatedEvent]);
+        // }
+
+        fetchEvents();
     };
 
     return (
