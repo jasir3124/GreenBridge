@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+import React, { useCallback, useState } from 'react';
+import { useFocusEffect } from '@react-navigation/native';
 import {
   View,
   Text,
@@ -16,10 +17,17 @@ import { MapPin, Clock, Users, Award, Search, CheckCircle, Calendar, Star } from
 
 export default function EventsScreen() {
   const { user, updateUser } = useAuth();
-  const { events, registerForEvent, recordAttendance } = useData();
+  const { events, registerForEvent, recordAttendance, refreshEvents } = useData();
   const [searchQuery, setSearchQuery] = useState('');
   const [filterCategory, setFilterCategory] = useState('All');
-  const [loading, setLoading] = useState(false);
+  const [loadingStates, setLoadingStates] = useState({}); // Changed to object to track individual events
+  const ipAddress = process.env.EXPO_PUBLIC_IP_ADDRESS;
+
+  useFocusEffect(
+      useCallback(() => {
+        refreshEvents();
+      }, [])
+  );
 
   const categories = ['All', 'Workshop', 'Community', 'Summit', 'Training'];
 
@@ -30,7 +38,7 @@ export default function EventsScreen() {
     return matchesSearch && matchesCategory;
   });
 
-  const formatDate = (dateString: string) => {
+  const formatDate = (dateString) => {
     const date = new Date(dateString);
     return date.toLocaleDateString('en-US', {
       weekday: 'short',
@@ -41,33 +49,31 @@ export default function EventsScreen() {
     });
   };
 
-  const isEventFull = (event: any) => {
+  const isEventFull = (event) => {
     return event.currentParticipants >= event.maxParticipants;
   };
 
-  const isEventPast = (eventDate: string) => {
+  const isEventPast = (eventDate) => {
     return new Date(eventDate) < new Date();
   };
 
-  const isEventHappening = (eventDate: string) => {
+  const isEventHappening = (eventDate) => {
     const eventTime = new Date(eventDate);
     const now = new Date();
     const timeDiff = eventTime.getTime() - now.getTime();
     const hoursDiff = timeDiff / (1000 * 3600);
-
-    // Event is "happening" if it's within 2 hours before or 4 hours after start time
     return hoursDiff >= -4 && hoursDiff <= 2;
   };
 
-  const isRegistered = (eventId: string) => {
+  const isRegistered = (eventId) => {
     return user?.registeredEvents.includes(eventId) || false;
   };
 
-  const isAttended = (eventId: string) => {
+  const isAttended = (eventId) => {
     return user?.attendedEvents.includes(eventId) || false;
   };
 
-  const getEventStatus = (event: any) => {
+  const getEventStatus = (event) => {
     if (isAttended(event.id)) return 'attended';
     if (isRegistered(event.id)) {
       if (isEventHappening(event.date)) return 'canAttend';
@@ -79,8 +85,21 @@ export default function EventsScreen() {
     return 'available';
   };
 
-  const handleRegister = async (eventId: string) => {
-    if (!user || loading) return;
+  // Helper function to set loading state for specific event
+  const setEventLoading = (eventId, isLoading) => {
+    setLoadingStates(prev => ({
+      ...prev,
+      [eventId]: isLoading
+    }));
+  };
+
+  // Helper function to get loading state for specific event
+  const getEventLoading = (eventId) => {
+    return loadingStates[eventId] || false;
+  };
+
+  const handleRegister = async (eventId) => {
+    if (!user || getEventLoading(eventId)) return;
 
     const event = events.find(e => e.id === eventId);
     if (!event) return;
@@ -108,25 +127,31 @@ export default function EventsScreen() {
           {
             text: 'Register',
             onPress: async () => {
-              setLoading(true);
+              setEventLoading(eventId, true);
               try {
-                // Call the backend API here
-                const response = await fetch(`https://your-api.com/api/events/${eventId}/register`, {
+                console.log('Starting registration for event:', eventId);
+
+                const response = await fetch(`https://${ipAddress}/api/users/registerToEvent/${eventId}`, {
                   method: 'POST',
                   headers: {
                     'Content-Type': 'application/json',
-                    // Include auth token if necessary, e.g.
-                    // Authorization: `Bearer ${user.token}`,
                   },
                   body: JSON.stringify({ userId: user.id }),
                 });
 
+                console.log('Registration response status:', response.status);
+
                 if (!response.ok) {
-                  throw new Error('Failed to register');
+                  const errorText = await response.text();
+                  console.error('Registration failed:', response.status, errorText);
+                  throw new Error(`Registration failed: ${response.status}`);
                 }
 
+                const responseData = await response.json();
+                console.log('Registration successful:', responseData);
+
                 // Update local state after successful registration
-                registerForEvent(eventId, user.id); // existing context update if needed
+                await registerForEvent(eventId, user.id);
                 updateUser({
                   registeredEvents: [...user.registeredEvents, eventId]
                 });
@@ -136,9 +161,13 @@ export default function EventsScreen() {
                     `You're registered for "${event.title}". We'll remind you before the event starts.`
                 );
               } catch (error) {
-                Alert.alert('Registration Failed', 'Please try again later.');
+                console.error('Registration error:', error);
+                Alert.alert(
+                    'Registration Failed',
+                    'Please check your internet connection and try again. If the problem persists, please contact support.'
+                );
               } finally {
-                setLoading(false);
+                setEventLoading(eventId, false);
               }
             }
           }
@@ -146,8 +175,8 @@ export default function EventsScreen() {
     );
   };
 
-  const handleCancelRegistration = async (eventId: string) => {
-    if (!user || loading) return;
+  const handleCancelRegistration = async (eventId) => {
+    if (!user || getEventLoading(eventId)) return;
 
     const event = events.find(e => e.id === eventId);
     if (!event) return;
@@ -161,21 +190,28 @@ export default function EventsScreen() {
             text: 'Cancel Registration',
             style: 'destructive',
             onPress: async () => {
-              setLoading(true);
+              setEventLoading(eventId, true);
               try {
-                // Call the backend API here
-                const response = await fetch(`https://your-api.com/api/events/${eventId}/unregister`, {
+                console.log('Starting cancellation for event:', eventId);
+
+                const response = await fetch(`https://${ipAddress}/api/users/unregisterFromEvent/${eventId}`, {
                   method: 'POST',
                   headers: {
                     'Content-Type': 'application/json',
-                    // Authorization: `Bearer ${user.token}`, // if needed
                   },
                   body: JSON.stringify({ userId: user.id }),
                 });
 
+                console.log('Cancellation response status:', response.status);
+
                 if (!response.ok) {
-                  throw new Error('Failed to cancel registration');
+                  const errorText = await response.text();
+                  console.error('Cancellation failed:', response.status, errorText);
+                  throw new Error(`Cancellation failed: ${response.status}`);
                 }
+
+                const responseData = await response.json();
+                console.log('Cancellation successful:', responseData);
 
                 // Update local state after successful unregister
                 updateUser({
@@ -184,9 +220,13 @@ export default function EventsScreen() {
 
                 Alert.alert('Registration Cancelled', 'Your registration has been cancelled.');
               } catch (error) {
-                Alert.alert('Cancellation Failed', 'Please try again later.');
+                console.error('Cancellation error:', error);
+                Alert.alert(
+                    'Cancellation Failed',
+                    'Please check your internet connection and try again. If the problem persists, please contact support.'
+                );
               } finally {
-                setLoading(false);
+                setEventLoading(eventId, false);
               }
             }
           }
@@ -194,8 +234,8 @@ export default function EventsScreen() {
     );
   };
 
-  const handleAttendance = async (eventId: string) => {
-    if (!user || loading) return;
+  const handleAttendance = async (eventId) => {
+    if (!user || getEventLoading(eventId)) return;
 
     const event = events.find(e => e.id === eventId);
     if (!event) return;
@@ -219,7 +259,7 @@ export default function EventsScreen() {
     }
 
     const eventDetails = `📅 Event: ${event.title}
-     ${formatDate(event.date)}
+📅 ${formatDate(event.date)}
 📍 Location: ${event.location}
 🏷️ Category: ${event.category}
 👥 Participants: ${event.currentParticipants}/${event.maxParticipants}
@@ -240,7 +280,7 @@ export default function EventsScreen() {
             text: 'Mark as Attended',
             style: 'default',
             onPress: async () => {
-              setLoading(true);
+              setEventLoading(eventId, true);
               try {
                 await recordAttendance(eventId, user.id);
 
@@ -267,9 +307,10 @@ export default function EventsScreen() {
                   );
                 }
               } catch (error) {
+                console.error('Attendance error:', error);
                 Alert.alert('❌ Attendance Error', 'Failed to record your attendance. Please try again or contact support if the issue persists.');
               } finally {
-                setLoading(false);
+                setEventLoading(eventId, false);
               }
             }
           }
@@ -277,8 +318,9 @@ export default function EventsScreen() {
     );
   };
 
-  const renderEventButton = (event: any) => {
+  const renderEventButton = (event) => {
     const status = getEventStatus(event);
+    const isLoading = getEventLoading(event.id);
 
     switch (status) {
       case 'attended':
@@ -292,13 +334,13 @@ export default function EventsScreen() {
       case 'canAttend':
         return (
             <TouchableOpacity
-                style={styles.attendButton}
+                style={[styles.attendButton, isLoading && styles.disabledButton]}
                 onPress={() => handleAttendance(event.id)}
-                disabled={loading}
+                disabled={isLoading}
             >
               <CheckCircle color="white" size={16} />
               <Text style={styles.attendButtonText}>
-                {loading ? 'Processing...' : 'Mark Attendance'}
+                {isLoading ? 'Processing...' : 'Mark Attendance'}
               </Text>
             </TouchableOpacity>
         );
@@ -307,11 +349,13 @@ export default function EventsScreen() {
         return (
             <View style={styles.buttonRow}>
               <TouchableOpacity
-                  style={styles.cancelButton}
+                  style={[styles.cancelButton, isLoading && styles.disabledButton]}
                   onPress={() => handleCancelRegistration(event.id)}
-                  disabled={loading}
+                  disabled={isLoading}
               >
-                <Text style={styles.cancelButtonText}>Cancel</Text>
+                <Text style={styles.cancelButtonText}>
+                  {isLoading ? 'Cancelling...' : 'Cancel'}
+                </Text>
               </TouchableOpacity>
               <View style={styles.registeredButton}>
                 <Calendar color="#16A34A" size={16} />
@@ -344,12 +388,12 @@ export default function EventsScreen() {
       default:
         return (
             <TouchableOpacity
-                style={styles.registerButton}
+                style={[styles.registerButton, isLoading && styles.disabledButton]}
                 onPress={() => handleRegister(event.id)}
-                disabled={loading}
+                disabled={isLoading}
             >
               <Text style={styles.registerButtonText}>
-                {loading ? 'Registering...' : 'Register'}
+                {isLoading ? 'Registering...' : 'Register'}
               </Text>
             </TouchableOpacity>
         );
@@ -745,6 +789,9 @@ const styles = StyleSheet.create({
     color: '#DC2626',
     fontSize: 16,
     fontFamily: 'Inter-SemiBold',
+  },
+  disabledButton: {
+    opacity: 0.6,
   },
   emptyState: {
     alignItems: 'center',
